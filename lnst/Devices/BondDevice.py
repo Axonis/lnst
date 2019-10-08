@@ -354,7 +354,7 @@ class BondDevice(MasterDevice):
 
     @xmit_hash_policy.setter
     def xmit_hash_policy(self, val):
-        m = {"layer2": 0, "layer2+3": 1, "layer3+4": 2, "encap2+3": 3, "encap3+4": 4}
+        m = {"layer2": 0, "layer3+4": 1, "layer2+3": 2}
 
         if val in m:
             self._set_linkinfo_data_attr("IFLA_BOND_XMIT_HASH_POLICY", m[val])
