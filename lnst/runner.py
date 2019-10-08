@@ -15,7 +15,7 @@ params = {
     "perf_tool_cpu": 5,
     "bonding_mode": "802.3ad",
     "miimon_value": 100,
-    "xmit": "layer3+4",
+    "xmit_hash_policy": "layer3+4",
 }
 
 
