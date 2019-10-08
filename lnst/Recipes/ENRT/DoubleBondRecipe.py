@@ -25,6 +25,7 @@ class DoubleBondRecipe(CommonHWSubConfigMixin, OffloadSubConfigMixin,
         dict(gro="on", gso="on", tso="off", tx="off")))
 
     bonding_mode = StrParam(mandatory=True)
+    xmit = StrParam(mandatory=False)
     miimon_value = IntParam(mandatory=True)
 
     def test_wide_configuration(self):
@@ -34,7 +35,7 @@ class DoubleBondRecipe(CommonHWSubConfigMixin, OffloadSubConfigMixin,
         net_addr6 = "fc00:0:0:0"
         for i, host in enumerate([host1, host2]):
             host.bond0 = BondDevice(mode=self.params.bonding_mode,
-                miimon=self.params.miimon_value)
+                miimon=self.params.miimon_value, xmit_hash_policy=self.params.xmit)
             for dev in [host.eth0, host.eth1]:
                 dev.down()
                 host.bond0.slave_add(dev)

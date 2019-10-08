@@ -359,7 +359,7 @@ class BondDevice(MasterDevice):
         if val in m:
             self._set_linkinfo_data_attr("IFLA_BOND_XMIT_HASH_POLICY", val)
         else:
-            raise DeviceConfigError("Invalid value, must be in {}}.".format(m))
+            raise DeviceConfigError("Invalid value, must be in {}.".format(m))
         self._nl_link_sync("set")
 
     @property
