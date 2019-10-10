@@ -187,7 +187,10 @@ class BaseEnrtRecipe(BaseSubConfigMixin, PingTestAndEvaluate, PerfRecipe):
 
     def generate_flow_combinations(self, config):
         for client_nic, server_nic in self.generate_perf_endpoints(config):
+            import logging
+            logging.debug("********************* IP VERSIONS: " % self.params.ip_versions)
             for ipv in self.params.ip_versions:
+                ipv="ipv4"
                 if ipv == "ipv4":
                     family = AF_INET
                 elif ipv == "ipv6":

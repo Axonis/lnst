@@ -24,6 +24,6 @@ ctl = Controller()
 recipe = DoubleBondRecipe(**params)
 
 ctl.run(recipe)
-summary_fmt = RunSummaryFormatter(level=ResultLevel.IMPORTANT)
+summary_fmt = RunSummaryFormatter(level=ResultLevel.DEBUG)
 for run in recipe.runs:
-    logging.info(summary_fmt.format_run(run))
+    logging.debug(summary_fmt.format_run(run))

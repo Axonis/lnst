@@ -81,6 +81,12 @@ class DoubleBondRecipe(CommonHWSubConfigMixin, OffloadSubConfigMixin,
                     dev.host.hostid, dev.name, dev.miimon
                 )
                 for dev in config.test_wide_devices
+            ]),
+            "\n".join([
+                "Configured {}.{}.xmit_hash_policy = {}".format(
+                    dev.host.hostid, dev.name, dev.xmit_hash_policy
+                )
+                for dev in config.test_wide_devices
             ])
         ]
         return desc
