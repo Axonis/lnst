@@ -10,8 +10,8 @@ import logging
 params = {
     "driver": "ixgbe",
     "dev_intr_cpu": 0,
-    "perf_tests": "(\"tcp_stream\",)",
-    "ip_versions": "(\"ipv4\",)",
+    "perf_tests": ("tcp_stream",),
+    "ip_versions": ("ipv4",),
     "perf_tool_cpu": 5,
     "bonding_mode": "802.3ad",
     "miimon_value": 100,
