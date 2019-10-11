@@ -3,7 +3,7 @@ from contextlib import contextmanager
 
 from lnst.Common.LnstError import LnstError
 from lnst.Common.Parameters import Param, IntParam, StrParam, BoolParam, ListParam
-from lnst.Common.IpAddress import AF_INET, AF_INET6
+from lnst.Common.IpAddress import AF_INET, AF_INET6, AF_UNSPEC
 
 from lnst.Recipes.ENRT.ConfigMixins.BaseSubConfigMixin import BaseSubConfigMixin
 
@@ -189,8 +189,8 @@ class BaseEnrtRecipe(BaseSubConfigMixin, PingTestAndEvaluate, PerfRecipe):
         for client_nic, server_nic in self.generate_perf_endpoints(config):
             import logging
             logging.debug("********************* IP VERSIONS: " % self.params.ip_versions)
+            family = AF_UNSPEC
             for ipv in self.params.ip_versions:
-                ipv="ipv4"
                 if ipv == "ipv4":
                     family = AF_INET
                 elif ipv == "ipv6":
