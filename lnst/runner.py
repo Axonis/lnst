@@ -16,6 +16,7 @@ params = {
     "bonding_mode": "802.3ad",
     "miimon_value": 100,
     "xmit_hash_policy": "layer3+4",
+    "perf_duration": 1,
 }
 
 

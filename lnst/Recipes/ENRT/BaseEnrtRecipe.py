@@ -38,7 +38,7 @@ class BaseEnrtRecipe(BaseSubConfigMixin, PingTestAndEvaluate, PerfRecipe):
     perf_duration = IntParam(default=60)
     perf_iterations = IntParam(default=5)
     perf_parallel_streams = IntParam(default=1)
-    perf_msg_sizes = ListParam(default=[123])
+    perf_msg_sizes = ListParam(default=[16384])
     perf_reverse = BoolParam(default=False)
 
     net_perf_tool = Param(default=IperfFlowMeasurement)

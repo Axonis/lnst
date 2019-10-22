@@ -12,7 +12,7 @@ olichtne@redhat.com (Ondrej Lichtner)
 
 import re
 import socket
-from socket import inet_pton, inet_ntop, AF_INET, AF_INET6, AF_UNSPEC
+from socket import inet_pton, inet_ntop, AF_INET, AF_INET6
 from lnst.Common.LnstError import LnstError
 
 #TODO create various generators for IPNetworks and IPaddresses in the same

@@ -25,17 +25,17 @@ class DoubleBondRecipe(CommonHWSubConfigMixin, OffloadSubConfigMixin,
         dict(gro="on", gso="on", tso="off", tx="off")))
 
     bonding_mode = StrParam(mandatory=True)
-    xmit_hash_policy = StrParam(mandatory=False)
     miimon_value = IntParam(mandatory=True)
+    xmit_hash_policy = StrParam(mandatory=False)
 
     def test_wide_configuration(self):
         host1, host2 = self.matched.host1, self.matched.host2
 
         net_addr = "192.168.101"
         net_addr6 = "fc00:0:0:0"
+
         for i, host in enumerate([host1, host2]):
-            host.bond0 = BondDevice(mode=self.params.bonding_mode,
-                miimon=self.params.miimon_value, xmit_hash_policy=self.params.xmit_hash_policy)
+            host.bond0 = BondDevice(**self._create_bond_kwargs())
             for dev in [host.eth0, host.eth1]:
                 dev.down()
                 host.bond0.slave_add(dev)
@@ -132,3 +132,11 @@ class DoubleBondRecipe(CommonHWSubConfigMixin, OffloadSubConfigMixin,
     def parallel_stream_qdisc_hw_config_dev_list(self):
         host1, host2 = self.matched.host1, self.matched.host2
         return [host1.eth0, host1.eth1, host2.eth0, host2.eth1]
+
+    def _create_bond_kwargs(self):
+        kwargs = {"mode": self.params.bonding_mode, "miimon": self.params.miimon_value}
+
+        if self.params.bonding_mode == "802.3ad":
+            kwargs["xmit_hash_policy"] = self.params.xmit_hash_policy
+
+        return kwargs
