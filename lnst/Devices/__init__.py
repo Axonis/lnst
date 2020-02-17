@@ -2,6 +2,7 @@ from lnst.Common.DeviceError import DeviceError
 from lnst.Devices.Device import Device
 from lnst.Devices.BridgeDevice import BridgeDevice
 from lnst.Devices.OvsBridgeDevice import OvsBridgeDevice
+from lnst.Devices.OvsBridge import OvsBridge
 from lnst.Devices.BondDevice import BondDevice
 from lnst.Devices.TeamDevice import TeamDevice
 from lnst.Devices.MacvlanDevice import MacvlanDevice
@@ -17,6 +18,7 @@ device_classes = [
         ("Device", Device),
         ("BridgeDevice", BridgeDevice),
         ("OvsBridgeDevice", OvsBridgeDevice),
+        ("OvsBridge", OvsBridge),
         ("MacvlanDevice", MacvlanDevice),
         ("VlanDevice", VlanDevice),
         ("VxlanDevice", VxlanDevice),

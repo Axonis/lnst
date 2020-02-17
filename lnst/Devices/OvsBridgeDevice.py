@@ -12,17 +12,17 @@ olichtne@redhat.com (Ondrej Lichtner)
 
 import re
 import pprint
-from lnst.Common.Utils import check_process_running
 from lnst.Common.ExecCmd import exec_cmd
 from lnst.Common.DeviceError import DeviceError
 from lnst.Devices.Device import Device
 from lnst.Devices.SoftDevice import SoftDevice
 
+
 class OvsBridgeDevice(SoftDevice):
     _name_template = "t_ovsbr"
 
     def __init__(self, ifmanager, *args, **kwargs):
-        super(OvsBridgeDevice, self).__init__(ifmanager)
+        super().__init__(ifmanager)
         self._type_init()
 
     @classmethod
@@ -35,15 +35,22 @@ class OvsBridgeDevice(SoftDevice):
     def destroy(self):
         exec_cmd("ovs-vsctl del-br %s" % self.name)
 
-    def port_add(self, dev, **kwargs):
+    def set(self, **kwargs):
+        options = ""
+        for opt_name, opt_value in kwargs.items():
+            options += " %s=%s" % (opt_name, opt_value)
+
+        exec_cmd("ovs-vsctl set bridge %s %s" % (self.name, options))
+
+    def port_add(self, dev_name, **kwargs):
         options = ""
         for opt_name, opt_value in kwargs.items():
             if opt_name == "set_iface" and opt_value:
-                options = (" -- set Interface %s" + options) % dev.name
+                options = (" -- set Interface %s" + options) % dev_name
             else:
                 options += " %s=%s" % (opt_name, opt_value)
 
-        exec_cmd("ovs-vsctl add-port %s %s%s" % (self.name, dev.name, options))
+        exec_cmd("ovs-vsctl add-port %s %s %s" % (self.name, dev_name, options))
 
     def port_del(self, dev):
         if isinstance(dev, Device):
@@ -51,19 +58,35 @@ class OvsBridgeDevice(SoftDevice):
         elif isinstance(dev, str):
             exec_cmd("ovs-vsctl del-port %s %s" % (self.name, dev))
         else:
+
             raise DeviceError("Invalid port_del argument %s" % str(dev))
 
-    def bond_add(self, port_name, devices, **kwargs):
+    def bond_add(self, bond_name, devices, **kwargs):
         dev_names = ""
+        interfaces = ""
+
         for dev in devices:
-            dev_names += " %s" % dev.name
+            if isinstance(dev, Device):
+                dev_names += " %s" % dev.name
+            else:
+                tmp_int = ""
+                for option, value in dev.items():
+                    if option == "set_interface":
+                        tmp_int = (" -- set Interface %s " + tmp_int) % dev["name"]
+                    else:
+                        tmp_int += "%s=%s " % (option, value)
+                interfaces += tmp_int
 
         options = ""
         for opt_name, opt_value in kwargs.items():
             options += " %s=%s" % (opt_name, opt_value)
 
-        exec_cmd("ovs-vsctl add-bond %s %s %s %s" % (self.name, port_name,
-                                                     dev_names, options))
+        print("ovs-vsctl add-bond %s %s %s %s %s" % (self.name, bond_name,
+                                                     dev_names, interfaces, options))
+
+        # ovs-vsctl add-bond br0 dpdkbond dpdk0 dpdk1 bond_mode=balance-tcp lacp=active
+        # -- set Interface dpdk0 type=dpdk options:dpdk-devargs=0000:19:00.0
+        # -- set Interface dpdk1 type=dpdk options:dpdk-devargs=0000:19:00.1
 
     def bond_del(self, dev):
         self.port_del(dev)
@@ -79,7 +102,7 @@ class OvsBridgeDevice(SoftDevice):
 
             options += " %s=%s" % (opt_name, opt_value)
 
-        exec_cmd("ovs-vsctl add-port %s %s -- set Interface %s "\
+        exec_cmd("ovs-vsctl add-port %s %s -- set Interface %s "
                  "type=internal %s" % (self.name, name,
                                        name, options))
 
@@ -98,12 +121,18 @@ class OvsBridgeDevice(SoftDevice):
 
             opts += " %s=%s" % (opt_name, opt_value)
 
-        exec_cmd("ovs-vsctl add-port %s %s -- set Interface %s "\
+        exec_cmd("ovs-vsctl add-port %s %s -- set Interface %s " \
                  "type=%s %s" % (self.name, name, name,
                                  tunnel_type, opts))
 
     def tunnel_del(self, name):
         self.port_del(name)
+
+    def patch_port_add(self, patch_name, peer_name):
+        exec_cmd("ovs-vsctl \
+            -- add-port %s %s \
+            -- set interface %s type=patch options:peer=%s" %
+                 (self.name, patch_name, patch_name, peer_name))
 
     def flow_add(self, entry):
         exec_cmd("ovs-ofctl add-flow %s '%s'" % (self.name, entry))
@@ -113,7 +142,7 @@ class OvsBridgeDevice(SoftDevice):
             self.flow_add(entry)
 
     def flows_del(self, entry):
-        exec_cmd("ovs-ofctl del-flows %s" % (self.name))
+        exec_cmd("ovs-ofctl del-flows %s" % self.name)
 
     @property
     def ports(self):
@@ -160,7 +189,7 @@ class OvsBridgeDevice(SoftDevice):
                 bond_list.append(line.split('\t'))
 
         for bond in bond_list[1:]:
-            bonds[bond[0]] = {'type' : bond[1], 'slaves' : bond[3]}
+            bonds[bond[0]] = {'type': bond[1], 'slaves': bond[3]}
 
         return bonds
 
@@ -168,9 +197,9 @@ class OvsBridgeDevice(SoftDevice):
     def flows_str(self):
         flows = []
         ignore_exprs = [r"cookie", r"duration", r"n_packets",
-            r"n_bytes", r"idle_age"]
+                        r"n_bytes", r"idle_age"]
         out = exec_cmd("ovs-ofctl dump-flows %s" % self.name,
-            log_outputs=False)[0]
+                       log_outputs=False)[0]
 
         for line in out.split('\n'):
             if line:
@@ -190,14 +219,14 @@ class OvsBridgeDevice(SoftDevice):
         port_lines = []
 
         dumped_ports = exec_cmd("ovs-ofctl dump-ports-desc %s" %
-            self.name, log_outputs=False)[0]
+                                self.name, log_outputs=False)[0]
 
         for match in re.finditer(r'(\w+)\((\w*)\)',
-            dumped_ports):
+                                 dumped_ports):
             numbered_ports[match.groups()[1]] = match.groups()[0]
 
         ovs_show = exec_cmd("ovs-vsctl show",
-            log_outputs=False)[0]
+                            log_outputs=False)[0]
         regex = r'(Port[\w\W]*?)(?=Port|ovs_version)'
 
         for match in re.finditer(regex, ovs_show):
@@ -216,7 +245,7 @@ class OvsBridgeDevice(SoftDevice):
         return res
 
     def _line_to_port_number(self, line, ref, result):
-        name = re.match(r"Port=\"(\w+)\"", line).groups()[0]
+        name = re.match(r"Port=\"(\w+)\"", line)
 
         try:
             number = ref[name]
