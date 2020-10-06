@@ -17,7 +17,6 @@ from lnst.RecipeCommon.PacketAssert import (PacketAssertConf,
                                             PacketAssertTestAndEvaluate)
 from lnst.RecipeCommon.Perf.Measurements import Flow as PerfFlow
 from lnst.RecipeCommon.Ping.Recipe import PingConf
-from lnst.RecipeCommon.Ping.PingEndpoints import PingEndpoints
 from lnst.Recipes.ENRT.XfrmTools import (configure_ipsec_esp_aead,
                                          generate_key)
 
@@ -179,7 +178,19 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
         The ping endpoints for this recipe are the configured endpoints of
         the IPsec on both hosts.
         """
-        return [PingEndpoints(config.endpoint1.netns, config.endpoint2.netns)]
+        ns1, ns2 = config.endpoint1.netns, config.endpoint2.netns
+        ip1, ip2 = config.ips
+        count = self.params.ping_count
+        interval = self.params.ping_interval
+        size = self.params.ping_psize
+        common_args = {'count': count, 'interval': interval,
+                       'size': size}
+        ping_conf = PingConf(client=ns1,
+                             client_bind=ip1,
+                             destination=ns2,
+                             destination_address=ip2,
+                             **common_args)
+        yield [ping_conf]
 
     def generate_flow_combinations(self, config):
         """
@@ -209,10 +220,14 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
 
     def ping_test(self, ping_configs):
         """
-        TODO - mention overriding, differences between ENRT base
-        Ping test is utilizing PacketAssert class to search
-        for the appropriate ESP IP packet. Result of ping
-        test is handed to the super class' method.
+        This method is a special case of ***ping_test*** and directly
+        overrides method from :class:`PingTestAndEvaluate` instead
+        of using the default method of :any:`BaseEnrtRecipe`.
+
+        This is the case due to the integration of the :any:`PacketAssert`
+        class to also search for the appropriate ESP IP packet specified.
+
+        Result of ping test is handed to the super class' method.
 
         Returned as::
 
@@ -239,9 +254,14 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
         pa_result = self.packet_assert_test_stop()
         dump.kill(signal=signal.SIGINT)
 
-        return (ping_result, pa_config, pa_result)
+        return ping_result, pa_config, pa_result
 
     def ping_report_and_evaluate(self, results):
+        """
+
+        :param results:
+        :return:
+        """
         super().ping_report_and_evaluate(results[0])
         self.packet_assert_evaluate_and_report(results[1], results[2])
 
