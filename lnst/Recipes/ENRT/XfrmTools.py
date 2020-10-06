@@ -1,12 +1,34 @@
 from lnst.Common.LnstError import LnstError
 
 def generate_key(length):
+    """
+    Method generates key suitable for the IPsec.
+
+    :param length: Desired length of the generated key
+    :return: key
+    """
     key = "0x"
     key = key + (length//8) * "0b"
     return key
 
 def configure_ipsec_esp_aead(m1, ip1, m2, ip2, algo, algo_key, icv_len,
                              ipsec_mode, spi_vals):
+    """
+    This method creates states and policies for the ESP AEAD IPsec
+    between two endpoinsts according to the specified parameters. The iproute2's
+    ip-xfrm is used for the configuration.
+
+
+    :param m1: Handle for the Host API for the endpoint
+    :param ip1: IPv4 and IPv6 addresses of given device under test
+    :param m2: Handle for the Host API for the other endpoint
+    :param ip2: IPv4 and IPv6 addresses of other side of the endpoint
+    :param algo: Encryption algorithm that will be used for the configuration of ESP
+    :param algo_key: Generated key for the encryption algorithm
+    :param icv_len: Length of ICV for the AEAD encryption protocol
+    :param ipsec_mode: Mode of the ESP
+    :param spi_vals: SPI value for the identification
+    """
     for m, in1, in2,  in [(m1, ip2, ip1), (m2, ip1, ip2)]:
         m.run("ip xfrm policy flush")
         m.run("ip xfrm state flush")
@@ -37,6 +59,23 @@ def configure_ipsec_esp_aead(m1, ip1, m2, ip2, algo, algo_key, icv_len,
 
 def configure_ipsec_esp_ah_comp(m1, ip1, m2, ip2, ciph_alg, ciph_key, hash_alg,
                                 hash_key, ipsec_mode, spi_vals):
+    """
+    This method creates states and policies for the ESP AH IPsec with IPcomp
+    between two endpoinsts according to the specified parameters. The iproute2's
+    ip-xfrm is used for the configuration.
+
+    :param m1: Handle for the Host API for the endpoint
+    :param ip1: IPv4 and IPv6 addresses of given device under test
+    :param m2: Handle for the Host API for the other endpoint
+    :param ip2: IPv4 and IPv6 addresses of other side of the endpoint
+    :param ciph_alg: Encryption algorithm that will be used for the configuration of ESP
+    :param ciph_key: Generated key for the encryption algorithm
+    :param hash_alg: Algorithm for AH part of IPsec
+    :param hash_key: Generated key for the authentication protocol
+    :param icv_len: Length of ICV for the AH encryption protocol
+    :param ipsec_mode: Mode of the ESP
+    :param spi_vals: SPI value for the identification
+    """
     m_keys = []
     for m in [m1, m2]:
         res = m.run("rpm -qa iproute")

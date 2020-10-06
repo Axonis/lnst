@@ -8,6 +8,27 @@ from lnst.Tests.BaseTestModule import BaseTestModule
 from lnst.Common.LnstError import LnstError
 
 class PacketAssert(BaseTestModule):
+    """
+    This test module utilizes tcpdump to capture packets on a network interface
+    based on filters defined by the test module parameters. It returns the number
+    of captured packets that match the filter criteria.
+
+    This test module is usually used in conjunction with :any:`Ping` test module,
+    for example:
+
+    pa_job = host1.run(PacketAssert())
+    host1.run(Ping())
+    pa_job.kill()
+
+    if pa_job.res_data['p_recv'] < 10:
+        print("failed")
+
+    :param interface: interface to be used by the tcpdump
+    :param p_filter: tcpdump's pcap filter expression to be matched
+    :param grep_for: regex to be matched in the string representation of a
+    packet in the tcpdump output
+    :param promiscuous: toggle of promiscuous mode
+    """
     interface = DeviceParam(mandatory=True)
     p_filter = StrParam(default='')
     grep_for = ListParam(default=[])

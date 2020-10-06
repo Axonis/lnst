@@ -7,6 +7,8 @@ from lnst.Common.Parameters import StrParam
 from lnst.Common.LnstError import LnstError
 from lnst.Controller import HostReq, DeviceReq, RecipeParam
 from lnst.Recipes.ENRT.BaseEnrtRecipe import BaseEnrtRecipe
+from lnst.Recipes.ENRT.ConfigMixins.PerfReversibleFlowMixin import (
+    PerfReversibleFlowMixin)
 from lnst.Recipes.ENRT.ConfigMixins.BaseSubConfigMixin import (
     BaseSubConfigMixin as ConfMixin)
 from lnst.Recipes.ENRT.ConfigMixins.CommonHWSubConfigMixin import (
@@ -15,11 +17,12 @@ from lnst.RecipeCommon.PacketAssert import (PacketAssertConf,
                                             PacketAssertTestAndEvaluate)
 from lnst.RecipeCommon.Perf.Measurements import Flow as PerfFlow
 from lnst.RecipeCommon.Ping.Recipe import PingConf
+from lnst.RecipeCommon.Ping.PingEndpoints import PingEndpoints
 from lnst.Recipes.ENRT.XfrmTools import (configure_ipsec_esp_aead,
                                          generate_key)
 
 
-class IpsecEspAeadRecipe(CommonHWSubConfigMixin, BaseEnrtRecipe,
+class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEnrtRecipe,
                          PacketAssertTestAndEvaluate):
     """
     This recipe implements Enrt testing for a simple IPsec scenario that looks
@@ -36,12 +39,15 @@ class IpsecEspAeadRecipe(CommonHWSubConfigMixin, BaseEnrtRecipe,
         | host1  |             | host2  |
         +--------+             +--------+
 
-    The recipe provides additional recipe parameter to configure IPsec tunel.
+    The recipe provides additional recipe parameter to configure IPsec mode.
+    As of now recipe defines the exact algorithm to be used in ESP statically.
 
         :param ipsec_mode:
-            mode of the ipsec tunnel
+            (mandatory test parameter) the IPsec mode to be used
+             in ESP (ex. `tunnel` or `transport`)
 
-    All sub configurations are included via Mixin classes.
+
+    All sub configurations are included via Mixin classes, except for the IPsec.
 
     The actual test machinery is implemented in the :any:`BaseEnrtRecipe` class.
     """
@@ -58,11 +64,11 @@ class IpsecEspAeadRecipe(CommonHWSubConfigMixin, BaseEnrtRecipe,
     def test_wide_configuration(self):
         """
         Test wide configuration for this recipe involves just adding an IPv4 and
-        IPv6 address to the matched eth0 nics on both hosts and route between them.
+        IPv6 address to the matched eth0 nics on both hosts and
+        creating a route between configured endpoints.
 
-        host1.eth0 = 192.168.101.1/24 and fc00::1/64
-
-        host2.eth0 = 192.168.101.2/24 and fc00::2/64
+        | host1.eth0 = 192.168.101.1/24 and fc00::1/64
+        | host2.eth0 = 192.168.101.2/24 and fc00::2/64
         """
         host1, host2 = self.matched.host1, self.matched.host2
 
@@ -118,8 +124,15 @@ class IpsecEspAeadRecipe(CommonHWSubConfigMixin, BaseEnrtRecipe,
 
     def generate_sub_configurations(self, config):
         """
+        This method completely overrides default method
+        from :any:`BaseSubConfigMixin` class due to not having
+        a specific IPsec configuration mixin class.
+        Therefore the method serves a similar purpose as a mixin class would.
+
         Test wide configuration is extended with subconfiguration containing
         IPsec tunnel with predefined parameters for both IP versions.
+
+        New copy of the config is created for each algorithm variant defined.
         """
         ipsec_mode = self.params.ipsec_mode
         spi_values = self.spi_values
@@ -143,8 +156,10 @@ class IpsecEspAeadRecipe(CommonHWSubConfigMixin, BaseEnrtRecipe,
 
     def apply_sub_configuration(self, config):
         """
-        Subconfiguration containing IPsec tunnel is applied through
-        XfrmTools class.
+        This method applies newly defined IPsec subconfig atop
+        of previously defined :meth:`test_wide_configuration`.
+
+        IPsec configuration is applied through :any:`XfrmTools`.
         """
         super().apply_sub_configuration(config)
         ns1, ns2 = config.endpoint1.netns, config.endpoint2.netns
@@ -162,21 +177,9 @@ class IpsecEspAeadRecipe(CommonHWSubConfigMixin, BaseEnrtRecipe,
     def generate_ping_configurations(self, config):
         """
         The ping endpoints for this recipe are the configured endpoints of
-        the IPsec tunnel on both hosts.
+        the IPsec on both hosts.
         """
-        ns1, ns2 = config.endpoint1.netns, config.endpoint2.netns
-        ip1, ip2 = config.ips
-        count = self.params.ping_count
-        interval = self.params.ping_interval
-        size = self.params.ping_psize
-        common_args = {'count': count, 'interval': interval,
-                       'size': size}
-        ping_conf = PingConf(client=ns1,
-                             client_bind=ip1,
-                             destination=ns2,
-                             destination_address=ip2,
-                             **common_args)
-        yield [ping_conf]
+        return [PingEndpoints(config.endpoint1.netns, config.endpoint2.netns)]
 
     def generate_flow_combinations(self, config):
         """
@@ -204,13 +207,9 @@ class IpsecEspAeadRecipe(CommonHWSubConfigMixin, BaseEnrtRecipe,
                 )
                 yield [flow]
 
-                if ("perf_reverse" in self.params and
-                        self.params.perf_reverse):
-                    reverse_flow = self._create_reverse_flow(flow)
-                    yield [reverse_flow]
-
     def ping_test(self, ping_configs):
         """
+        TODO - mention overriding, differences between ENRT base
         Ping test is utilizing PacketAssert class to search
         for the appropriate ESP IP packet. Result of ping
         test is handed to the super class' method.
