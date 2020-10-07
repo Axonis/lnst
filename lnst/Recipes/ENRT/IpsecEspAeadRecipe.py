@@ -24,8 +24,8 @@ from lnst.Recipes.ENRT.XfrmTools import (configure_ipsec_esp_aead,
 class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEnrtRecipe,
                          PacketAssertTestAndEvaluate):
     """
-    This recipe implements Enrt testing for a simple IPsec scenario that looks
-    as follows
+    This recipe implements Enrt testing for a simple IPsec tunnel
+    scenario that looks as follows
 
     .. code-block:: none
 
@@ -46,7 +46,8 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
              in ESP (ex. `tunnel` or `transport`)
 
 
-    All sub configurations are included via Mixin classes, except for the IPsec.
+    All sub configurations are included via Mixin classes,
+    except for the IPsec tunnel that is configured through the subconfiguration.
 
     The actual test machinery is implemented in the :any:`BaseEnrtRecipe` class.
     """
@@ -102,7 +103,7 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
     def generate_test_wide_description(self, config):
         """
         Test wide description is extended with the configured IP addresses,
-        specified IPsec algorithm, key length and integrity check value length.
+        specified IPsec mode, key length and integrity check value length.
         """
         desc = super().generate_test_wide_description(config)
         desc += [
@@ -125,7 +126,7 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
         """
         This method completely overrides default method
         from :any:`BaseSubConfigMixin` class due to not having
-        a specific IPsec configuration mixin class.
+        a specific IPsec tunnel configuration mixin class.
         Therefore the method serves a similar purpose as a mixin class would.
 
         Test wide configuration is extended with subconfiguration containing
@@ -155,10 +156,10 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
 
     def apply_sub_configuration(self, config):
         """
-        This method applies newly defined IPsec subconfig atop
+        This method applies newly defined IPsec tunnel subconfig atop
         of previously defined :meth:`test_wide_configuration`.
 
-        IPsec configuration is applied through :any:`XfrmTools`.
+        IPsec tunnel configuration is applied through :any:`XfrmTools`.
         """
         super().apply_sub_configuration(config)
         ns1, ns2 = config.endpoint1.netns, config.endpoint2.netns
@@ -175,8 +176,12 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
 
     def generate_ping_configurations(self, config):
         """
-        The ping endpoints for this recipe are the configured endpoints of
-        the IPsec on both hosts.
+        Generating ping configuration through this method is required due
+        to the later need of ping configuration for the :any:`PacketAssert`.
+
+        Method overrides default method of :any:`BaseEnrtRecipe` and adds
+        additional parameters to specify IPsec tunnel endpoints as well as
+        information to be able to run :any:`PacketAssert`.
         """
         ns1, ns2 = config.endpoint1.netns, config.endpoint2.netns
         ip1, ip2 = config.ips
@@ -227,6 +232,9 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
         This is the case due to the integration of the :any:`PacketAssert`
         class to also search for the appropriate ESP IP packet specified.
 
+        Packets are captured with tcpdump, inspected and correct ones
+        are counted.
+
         Result of ping test is handed to the super class' method.
 
         Returned as::
@@ -258,14 +266,26 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
 
     def ping_report_and_evaluate(self, results):
         """
+        Method reports and evaluates the results of the ping tests,
+        as well as the :any:`PacketAssert` run, where results are appended
+        to the ***results*** object.
 
-        :param results:
-        :return:
+        Due to this reason base method of the :any:`PingTestAndEvaluate`
+        is overrriden.
         """
         super().ping_report_and_evaluate(results[0])
         self.packet_assert_evaluate_and_report(results[1], results[2])
 
     def get_dev_by_ip(self, netns, ip):
+        """
+        Auxiliary method to locate the device by IP adress in a given namespace.
+        This method is to be used in the :meth:`ping_test` due to the tcpdump
+        requiring interface name, as well as :any:`PacketAssert` run.
+
+        :param netns: Namespace to be searched through
+        :param ip: IP adress to be found
+        :return: dev: :any:`Device` object with desired device
+        """
         for dev in netns.device_database:
             if ip in dev.ips:
                 return dev
@@ -274,12 +294,47 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
 
     @property
     def mtu_hw_config_dev_list(self):
+        """
+        The `mtu_hw_config_dev_list` property value for this scenario
+        is a list of the physical devices carrying data of the configured
+        IPsec tunnel:
+
+        | host1.eth0
+        | host2.eth0
+
+        For detailed explanation of this property see :any:`MTUHWConfigMixin`
+        class and :any:`MTUHWConfigMixin.mtu_hw_config_dev_list`.
+        """
         return [self.matched.host1.eth0, self.matched.host2.eth0]
 
     @property
     def dev_interrupt_hw_config_dev_list(self):
+        """
+        The `dev_interrupt_hw_config_dev_list` property value for this scenario
+        is a list of the physical devices carrying data of the configured
+        IPsec tunnel:
+
+        | host1.eth0
+        | host2.eth0
+
+        For detailed explanation of this property see
+        :any:`DevInterruptHWConfigMixin` class and
+        :any:`DevInterruptHWConfigMixin.dev_interrupt_hw_config_dev_list`.
+        """
         return [self.matched.host1.eth0, self.matched.host2.eth0]
 
     @property
     def parallel_stream_qdisc_hw_config_dev_list(self):
+        """
+        The `parallel_stream_qdisc_hw_config_dev_list` property value for this scenario
+        is a list of the physical devices carrying data of the configured
+        IPsec tunnel:
+
+        | host1.eth0
+        | host2.eth0
+
+        For detailed explanation of this property see
+        :any:`ParallelStreamQDiscHWConfigMixin` class and
+        :any:`ParallelStreamQDiscHWConfigMixin.parallel_stream_qdisc_hw_config_dev_list`.
+         """
         return [self.matched.host1.eth0, self.matched.host2.eth0]

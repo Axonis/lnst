@@ -10,3 +10,6 @@ Early Network Regression Testing (ENRT)
     base_enrt_class
     config_mixins
     specific_scenarios
+    recipe_common
+    tests
+    utils
