@@ -159,7 +159,8 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
         This method applies newly defined IPsec tunnel subconfig atop
         of previously defined :meth:`test_wide_configuration`.
 
-        IPsec tunnel configuration is applied through :any:`XfrmTools`.
+        IPsec tunnel configuration is applied through
+        :py:mod:`lnst.Recipes.ENRT.XfrmTools`.
         """
         super().apply_sub_configuration(config)
         ns1, ns2 = config.endpoint1.netns, config.endpoint2.netns
@@ -177,11 +178,12 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
     def generate_ping_configurations(self, config):
         """
         Generating ping configuration through this method is required due
-        to the later need of ping configuration for the :any:`PacketAssert`.
+        to the later need of ping configuration for the
+        :py:mod:`lnst.RecipeCommon.PacketAssert`.
 
         Method overrides default method of :any:`BaseEnrtRecipe` and adds
         additional parameters to specify IPsec tunnel endpoints as well as
-        information to be able to run :any:`PacketAssert`.
+        information to be able to run :py:mod:`lnst.RecipeCommon.PacketAssert`
         """
         ns1, ns2 = config.endpoint1.netns, config.endpoint2.netns
         ip1, ip2 = config.ips
@@ -201,6 +203,11 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
         """
         Flow combinations are generated based on the tunnel endpoints
         and test parameters.
+
+        Method overrides the default :any:`BaseEnrtRecipe` and manually
+        creates :any:`PerfFlow` due to the IP addresses and
+        :any:`Device.ips_filter` being already handled in the IPsec
+        configuration in the :any:`generate_sub_configurations`.
         """
         nic1, nic2 = config.endpoint1, config.endpoint2
         ns1, ns2 = config.endpoint1.netns, config.endpoint2.netns
@@ -229,8 +236,9 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
         overrides method from :class:`PingTestAndEvaluate` instead
         of using the default method of :any:`BaseEnrtRecipe`.
 
-        This is the case due to the integration of the :any:`PacketAssert`
-        class to also search for the appropriate ESP IP packet specified.
+        This is the case due to the integration of the
+        :py:mod:`lnst.RecipeCommon.PacketAssert` class to also search
+        for the appropriate ESP IP packet specified.
 
         Packets are captured with tcpdump, inspected and correct ones
         are counted.
@@ -267,8 +275,8 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
     def ping_report_and_evaluate(self, results):
         """
         Method reports and evaluates the results of the ping tests,
-        as well as the :any:`PacketAssert` run, where results are appended
-        to the ***results*** object.
+        as well as the :py:mod:`lnst.RecipeCommon.PacketAssert` job,
+        where results are appended to the ***results*** object.
 
         Due to this reason base method of the :any:`PingTestAndEvaluate`
         is overrriden.
@@ -280,7 +288,8 @@ class IpsecEspAeadRecipe(PerfReversibleFlowMixin, CommonHWSubConfigMixin, BaseEn
         """
         Auxiliary method to locate the device by IP adress in a given namespace.
         This method is to be used in the :meth:`ping_test` due to the tcpdump
-        requiring interface name, as well as :any:`PacketAssert` run.
+        requiring interface name, as well as :py:mod:`lnst.RecipeCommon.PacketAssert`
+        job.
 
         :param netns: Namespace to be searched through
         :param ip: IP adress to be found

@@ -17,7 +17,9 @@ class PacketAssert(BaseTestModule):
     for example:
 
     pa_job = host1.run(PacketAssert())
+
     host1.run(Ping())
+
     pa_job.kill()
 
     if pa_job.res_data['p_recv'] < 10:
