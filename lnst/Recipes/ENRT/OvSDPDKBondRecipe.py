@@ -246,3 +246,12 @@ class OvSDPDKBondRecipe(CommonHWSubConfigMixin, BaseEnrtRecipe):
 
     def generate_perf_endpoints(self, config):
         return [(self.matched.host1.dummy_cfg, self.matched.host2.dummy_cfg)]
+
+    def apply_perf_test_tweak(self, config):
+        pass
+
+    def describe_perf_test_tweak(self, config):
+        pass
+
+    def remove_perf_test_tweak(self, config):
+        pass
