@@ -65,15 +65,15 @@ class SRIOVNetnsRecipe(
             host.run(f"echo 1 > /sys/class/net/{host.eth0.name}/device/sriov_numvfs")
 
             vf_ifname = dict(ifname=f"{host.eth0.name}v0")
-            host.map_device(f"{vf_ifname}")
+            host.map_device("vf_eth0", vf_ifname)
 
             host.newns = NetNamespace(f"host{i}")
-            host.newns.eth0 = host.eth0
+            host.newns.vf_eth0 = host.vf_eth0
 
-            host.newns.eth0.ip_add(ipaddress("192.168.101." + str(i+1) + "/24"))
-            host.newns.eth0.ip_add(ipaddress("fc00::" + str(i+1) + "/64"))
-            host.newns.eth0.up()
-            configuration.test_wide_devices.append(host.newns.eth0)
+            host.newns.vf_eth0.ip_add(ipaddress("192.168.101." + str(i+1) + "/24"))
+            host.newns.vf_eth0.ip_add(ipaddress("fc00::" + str(i+1) + "/64"))
+            host.newns.vf_eth0.up()
+            configuration.test_wide_devices.append(host.newns.vf_eth0)
 
         self.wait_tentative_ips(configuration.test_wide_devices)
 
@@ -108,7 +108,7 @@ class SRIOVNetnsRecipe(
 
             [PingEndpoints(self.matched.host1.eth0, self.matched.host2.eth0)]
         """
-        return [PingEndpoints(self.matched.host1.newns.eth0, self.matched.host2.newns.eth0)]
+        return [PingEndpoints(self.matched.host1.newns.vf_eth0, self.matched.host2.newns.vf_eth0)]
 
     def generate_perf_endpoints(self, config):
         """
@@ -120,28 +120,28 @@ class SRIOVNetnsRecipe(
 
             [(self.matched.host1.eth0, self.matched.host2.eth0)]
         """
-        return [(self.matched.host1.newns.eth0, self.matched.host2.newns.eth0)]
+        return [(self.matched.host1.newns.vf_eth0, self.matched.host2.newns.vf_eth0)]
 
     @property
     def pause_frames_dev_list(self):
-        return [self.matched.host1.newns.eth0, self.matched.host2.newns.eth0]
+        return [self.matched.host1.newns.vf_eth0, self.matched.host2.newns.vf_eth0]
 
     @property
     def offload_nics(self):
-        return [self.matched.host1.newns.eth0, self.matched.host2.newns.eth0]
+        return [self.matched.host1.newns.vf_eth0, self.matched.host2.newns.vf_eth0]
 
     @property
     def mtu_hw_config_dev_list(self):
-        return [self.matched.host1.newns.eth0, self.matched.host2.newns.eth0]
+        return [self.matched.host1.newns.vf_eth0, self.matched.host2.newns.vf_eth0]
 
     @property
     def coalescing_hw_config_dev_list(self):
-        return [self.matched.host1.newns.eth0, self.matched.host2.newns.eth0]
+        return [self.matched.host1.newns.vf_eth0, self.matched.host2.newns.vf_eth0]
 
     @property
     def dev_interrupt_hw_config_dev_list(self):
-        return [self.matched.host1.newns.eth0, self.matched.host2.newns.eth0]
+        return [self.matched.host1.newns.vf_eth0, self.matched.host2.newns.vf_eth0]
 
     @property
     def parallel_stream_qdisc_hw_config_dev_list(self):
-        return [self.matched.host1.newns.eth0, self.matched.host2.newns.eth0]
+        return [self.matched.host1.newns.vf_eth0, self.matched.host2.newns.vf_eth0]
