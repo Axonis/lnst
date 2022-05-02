@@ -62,7 +62,7 @@ class SRIOVNetnsRecipe(
 
         for i, host in enumerate([host1, host2]):
             host.run(f"devlink dev eswitch set pci/{host.eth0.bus_info} mode switchdev")
-            host.run(f"echo 1 > /sys/class/net/{host.eht0.name}/device/sriov_numvfs")
+            host.run(f"echo 1 > /sys/class/net/{host.eth0.name}/device/sriov_numvfs")
 
             vf_ifname = dict(ifname=f"{host.eth0.name}v0")
             host.map_device(f"{vf_ifname}")
