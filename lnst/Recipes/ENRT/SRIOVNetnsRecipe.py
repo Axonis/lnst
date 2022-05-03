@@ -67,7 +67,7 @@ class SRIOVNetnsRecipe(
             vf_ifname = dict(ifname=f"{host.eth0.name}v0")
             host.map_device("vf_eth0", vf_ifname)
 
-            host.newns = NetNamespace(f"host{i}")
+            host.newns = NetNamespace(f"host{i+1}")
             host.newns.vf_eth0 = host.vf_eth0
 
             host.newns.vf_eth0.ip_add(ipaddress("192.168.101." + str(i+1) + "/24"))
@@ -93,6 +93,10 @@ class SRIOVNetnsRecipe(
         return desc
 
     def test_wide_deconfiguration(self, config):
+        host1, host2 = self.matched.host1, self.matched.host2
+        for i, host in enumerate([host1, host2]):
+            host.run(f"devlink dev eswitch set pci/{host.eth0.bus_info} mode legacy")
+            host.run(f"echo 0 > /sys/class/net/{host.eth0.name}/device/sriov_numvfs")
         ""  # overriding the parent docstring
         del config.test_wide_devices
 
