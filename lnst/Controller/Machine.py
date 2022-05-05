@@ -228,7 +228,6 @@ class Machine(object):
                 if netns_moved:
                     del self._netns_moved_devices[new_dev]
                     new_dev.disable_readonly_cache()
-                    new_dev._enable()
                 else:
                     self._tmp_device_database.remove(new_dev)
                     new_dev.ifindex = dev_data["ifindex"]
