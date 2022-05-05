@@ -71,8 +71,7 @@ class Host(Namespace):
             dev._id = dev_id
             dev._enable()
         else:
-            raise ControllerError("Device with macaddr {} not found on {}."
-                                  .format(hwaddr, self.hostid))
+            raise ControllerError(f"Device with how {how} not found on {self.hostid}.")
 
     def _custom_setattr(self, name, value):
         if not super(Host, self)._custom_setattr(name, value):
