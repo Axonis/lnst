@@ -67,12 +67,15 @@ class SRIOVNetnsRecipe(
             vf_ifname = dict(ifname=f"{host.eth0.name}v0")
             host.map_device("vf_eth0", vf_ifname)
 
-            host.newns = NetNamespace(f"host{i+1}")
+            host.newns = NetNamespace(f"lnst{i+1}")
             host.newns.vf_eth0 = host.vf_eth0
 
             host.newns.vf_eth0.ip_add(ipaddress("192.168.101." + str(i+1) + "/24"))
             host.newns.vf_eth0.ip_add(ipaddress("fc00::" + str(i+1) + "/64"))
+
+            host.eth0.up()
             host.newns.vf_eth0.up()
+
             configuration.test_wide_devices.append(host.newns.vf_eth0)
 
         self.wait_tentative_ips(configuration.test_wide_devices)
