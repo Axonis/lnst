@@ -349,5 +349,6 @@ class XDPRedirectCPUMeasurement(BaseFlowMeasurement):
                         "receiver_results": receiver,
                         "forwarded_results": forwarded,
                     },
+                    measurement_results=result,
                 )
             )

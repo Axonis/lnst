@@ -160,6 +160,7 @@ class BaseFlowMeasurement(BaseMeasurement):
                 "receiver_cpu_data": receiver_cpu,
                 "flow_results": flow_results,
             },
+            measurement_results=flow_results,
         )
         recipe.add_custom_result(recipe_result)
 

@@ -411,6 +411,7 @@ class ForwardingMeasurement(BaseFlowMeasurement):
             ),
             description="\n".join(desc),
             data=data,
+            measurement_results=result,
         )
         recipe.add_custom_result(recipe_result)
 

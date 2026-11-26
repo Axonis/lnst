@@ -185,6 +185,7 @@ class RDMABandwidthMeasurement(BaseFlowMeasurement):
                     else ResultType.FAIL
                 ),
                 description=aggregated_result.describe(),
-                data={"bandwidth": aggregated_result.bandwidth}
+                data={"bandwidth": aggregated_result.bandwidth},
+                measurement_results=aggregated_result,
             )
             recipe.add_custom_result(measurement_result)

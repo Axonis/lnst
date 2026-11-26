@@ -288,5 +288,6 @@ class XDPBenchMeasurement(BaseFlowMeasurement):
                     "receiver_results": receiver,
                     "flow_results": result,
                 },
+                measurement_results=result,
             )
             recipe.add_custom_result(recipe_result)

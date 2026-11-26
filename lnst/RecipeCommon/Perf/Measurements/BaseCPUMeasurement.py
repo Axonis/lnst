@@ -38,6 +38,8 @@ class BaseCPUMeasurement(BaseMeasurement):
 
         desc = [result.describe() for result in results]
 
+        agg_cpu = next((res for res in results if res.cpu == "cpu"), results[0])
+
         recipe.add_custom_result(
             MeasurementResult(
                 "cpu",
@@ -48,6 +50,7 @@ class BaseCPUMeasurement(BaseMeasurement):
                 ),
                 description="\n".join(desc),
                 data=cpu_data,
+                measurement_results=agg_cpu,
             )
         )
 

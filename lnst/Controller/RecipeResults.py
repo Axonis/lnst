@@ -298,8 +298,10 @@ class MeasurementResult(Result):
         result: Union[ResultType, bool] = ResultType.PASS,
         description: str = "",
         data: Optional[dict] = None,
+        measurement_results=None,
     ):
         self._measurement_type = measurement_type
+        self._measurement_results = measurement_results
         super().__init__(
             result,
             description,
@@ -309,3 +311,7 @@ class MeasurementResult(Result):
     @property
     def measurement_type(self) -> str:
         return self._measurement_type
+
+    @property
+    def measurement_results(self):
+        return self._measurement_results

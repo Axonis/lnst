@@ -145,11 +145,23 @@ class JsonRunSummaryFormatter(RunSummaryFormatter):
             else:
                 logging.warning(f"unhandled measurement result type: {result.measurement_type}")
                 measurement_data = None
-            return ret | {
+            out = ret | {
                 "type": "measurement",
                 "measurement_type": result.measurement_type,
                 "data": measurement_data,
             }
+            if (meas_results := result.measurement_results) is not None:
+                out["measurement_class"] = meas_results.measurement.__class__.__name__
+                out["metric_metadata"] = meas_results.metric_metadata
+                out["hosts"] = self._extract_hosts(meas_results)
+                if isinstance(measurement_data, dict):
+                    units = {}
+                    for metric in measurement_data:
+                        metric_val = getattr(meas_results, metric, None)
+                        if metric_val is not None and getattr(metric_val, "unit", None) is not None:
+                            units[metric] = metric_val.unit
+                    out["units"] = units
+            return out
         else:
             if result.data is not None:
                 logging.warning(f"unhandled recipe result type: {repr(result)}, can't format its data")
@@ -158,3 +170,25 @@ class JsonRunSummaryFormatter(RunSummaryFormatter):
                 "type": "unknown",
                 "description": result.description,
             }
+
+    @staticmethod
+    def _extract_hosts(meas_results) -> dict[str, str]:
+        hosts: dict[str, str] = {}
+        candidates = []
+        if (host := getattr(meas_results, "host", None)) is not None:
+            candidates.append(host)
+        if (flows := getattr(meas_results, "flows", None)) is not None:
+            for flow in flows:
+                candidates.extend(
+                    [getattr(flow, "generator", None), getattr(flow, "receiver", None)]
+                )
+        elif (flow := getattr(meas_results, "flow", None)) is not None:
+            candidates.extend(
+                [getattr(flow, "generator", None), getattr(flow, "receiver", None)]
+            )
+        for h in candidates:
+            hostid = getattr(h, "hostid", None)
+            hostname = getattr(h, "hostname", None)
+            if hostid and hostname:
+                hosts[hostid] = hostname
+        return hosts
