@@ -35,6 +35,49 @@ class Flow:
     aggregated_flow: bool = False
     warmup_duration: int = 0
 
+    @property
+    def label(self) -> str:
+        if self.aggregated_flow:
+            return "aggregate"
+
+        parts = [self.type]
+        if self.msg_size is not None:
+            parts.append(str(self.msg_size))
+
+        family = self._ip_family(self.generator_bind) or self._ip_family(self.receiver_bind)
+        if family:
+            parts.append(family)
+
+        src = self._format_endpoint(self.generator, self.generator_nic)
+        dst = self._format_endpoint(self.receiver, self.receiver_nic, self.receiver_port)
+        if src or dst:
+            parts.append(f"{src}->{dst}")
+
+        return " ".join(parts)
+
+    @staticmethod
+    def _ip_family(bind) -> str:
+        ip = bind.get("ip_addr") if isinstance(bind, dict) else bind
+        if ip is None:
+            return ""
+        return "ipv6" if ":" in str(ip) else "ipv4"
+
+    @staticmethod
+    def _format_endpoint(ns, nic, port=None) -> str:
+        host = getattr(ns, "hostid", None) or ""
+        netns = getattr(ns, "name", None) or ""
+        if host and netns:
+            host = f"{host}/{netns}"
+
+        nic_id = nic if isinstance(nic, str) else getattr(nic, "_id", None)
+        target = f"{host}.{nic_id}" if (host and nic_id) else (host or nic_id or "")
+
+        if target and port is not None:
+            return f"{target}:{port}"
+        if port is not None:
+            return str(port)
+        return target
+
     def __repr__(self):
         string = f"""
         Flow(

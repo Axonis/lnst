@@ -23,6 +23,13 @@ class XDPBenchMeasurementResults(BaseMeasurementResults):
         return ['generator_results', 'receiver_results']
 
     @property
+    def metric_metadata(self) -> dict:
+        label = getattr(self.flow, "label", None)
+        if not label:
+            return {}
+        return {metric: {"flow": label} for metric in self.metrics}
+
+    @property
     def generator_results(self) -> ParallelPerfResult:
         return self._generator_results
 

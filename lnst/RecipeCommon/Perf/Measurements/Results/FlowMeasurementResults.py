@@ -25,6 +25,13 @@ class FlowMeasurementResults(BaseMeasurementResults):
         ]
 
     @property
+    def metric_metadata(self) -> dict:
+        label = getattr(self.flow, "label", None)
+        if not label:
+            return {}
+        return {metric: {"flow": label} for metric in self.metrics}
+
+    @property
     def flow(self):
         return self._flow
 
